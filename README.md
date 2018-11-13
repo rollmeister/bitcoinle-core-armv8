@@ -9,44 +9,45 @@ DOWNLOAD THE SOLO MINING ON ARMV8 STARTUP GUIDE FROM...
 
 https://drive.google.com/open?id=1KfOKRjyN9sCnnhtu8SuBkitJqZdHraIA
 
-Pruned Bitcoin Blockchain. Suitable for running a Bitcoin Wallet as a Metronome for the solo miner. Takes hours, instead of weeks to sync. Date of archive sync 13-11-2018. Less than 3gb download.
+Pruned Bitcoin Blockchain. Suitable for running a Bitcoin Wallet as a Metronome for the solo miner. Takes hours, instead of weeks to sync. Date of archive sync 13-11-2018. Less than 3gb download.  
 https://drive.google.com/open?id=1N35z4iKCwD4rcrCvZ8IV5F8VpQ0kj6M4
 
-Extract on Linux using...
-tar xvjf prunedbtcblockchain.tar.bz2 ~/.bitcoin
-(goes into bitcoin core app folder)
+Extract on Linux using...  
+tar xvjf prunedbtcblockchain.tar.bz2 ~/.bitcoin  
+(goes into bitcoin core app folder)  
 
-# Add this to bitcoin.conf (of your bitcoin (NOT bitcoinle) app data folder)
-prune=550
-checklevel=2
-checkblocks=10
-checkblocksverify=10
-listen=1
-dbcache=256
-rpcport=8332
-upnp=0
-rpcuser=YOURMETRONOMEusername
-rpcpassword=YOURMETRONOMEpassword
-rpcallowip=0.0.0.0/0
-#OR allow only lan connections. e.g. IP class 192.168.10 (the first three numbers of your lan ip address)
-#rpcallowip=192.168.10/24
-server=1
+# Add this to bitcoin.conf (of your bitcoin (NOT bitcoinle) app data folder)  
+prune=550  
+checklevel=2  
+checkblocks=10  
+checkblocksverify=10  
+listen=1  
+dbcache=256  
+rpcport=8332  
+upnp=0  
+rpcuser=YOURMETRONOMEusername  
+rpcpassword=YOURMETRONOMEpassword  
+rpcallowip=0.0.0.0/0  
+#OR allow only lan connections. e.g. IP class 192.168.10 (the first three numbers of your lan ip address)  
+#rpcallowip=192.168.10/24  
+server=1  
 
-# Add Metronome details for BitcoinLE Core ArmV8 into .bitcoinle/bitcoin.conf
-metronomeAddr=xxx.xxx.xxx.xxx
-metronomePort=8332
-metronomeUser=YOURMETRONOMEusername
-metronomePassword=YOURMETRONOMEpassword
-upnp=1
-addnode=seed1.bitcoinle.org
-addnode=seed2.bitcoinle.org
-addnode=seed3.bitcoinle.org
+# Add Metronome details for BitcoinLE Core ArmV8 into .bitcoinle/bitcoin.conf  
+metronomeAddr=xxx.xxx.xxx.xxx  
+metronomePort=8332  
+metronomeUser=YOURMETRONOMEusername  
+metronomePassword=YOURMETRONOMEpassword  
+upnp=1  
+addnode=seed1.bitcoinle.org  
+addnode=seed2.bitcoinle.org  
+addnode=seed3.bitcoinle.org  
 
-# Bitcoin Core (e.g. for use as a Metronome) optimised fork
-Binary downloads available for aarch64/Ubuntu 16.04
-https://github.com/rollmeister/bitcoin-armv8
+# Bitcoin Core (e.g. for use as a Metronome) optimised fork  
+Binary downloads available for aarch64/Ubuntu 16.04  
+https://github.com/rollmeister/bitcoin-armv8  
 
-During solo minig, when the bitcoinle-miner receives a beat from the Metronome it mines for up to 45 seconds, unless it finds a valid block before. Previously the miner stopped as soon it detected a block was already mined by someone else, however this had a bug that caused a segfault and so so a fixed mining period was set as a work around.
+During solo minig, when the bitcoinle-miner receives a beat from the Metronome it mines for up to 45 seconds, unless it finds a valid block before. Previously the miner stopped as soon it detected a block was already mined by someone else, however this had a bug that caused a segfault and so a fixed mining period was set as a work around.  
+This is still alpha software.
 
 There is a slow memory leak in the software so restarting say using a cron job once a week is recommended.
 
