@@ -3,6 +3,11 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+# Make sure needed scripts are executable
+find  -type f -iname "*.sh" -exec chmod +x {} \;
+chmod +x src/leveldb/build_detect_platform;
+./unixfix.sh
+
 set -e
 srcdir="$(dirname $0)"
 cd "$srcdir"
