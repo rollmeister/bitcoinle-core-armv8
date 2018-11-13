@@ -1,3 +1,7 @@
+Compiling requires  
+./configure --disable-tests --disable-bench  
+for configure step
+
 This is a fork of the BitcoinLE Core software optimised for ArmV8. Hashrates on a 1.8ghz Cortex-a53 cpu core is 800kh/sec.
 
 BitcoinLE Core (BLE) requires Bitcoin (BTC) Core running separately as a Metronome.
