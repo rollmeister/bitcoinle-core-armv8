@@ -12,8 +12,8 @@
 class CSHA1
 {
 private:
-    uint32_t s[5];
-    unsigned char buf[64];
+    alignas(16) uint32_t s[5];
+    alignas(16) unsigned char buf[64];
     uint64_t bytes;
 
 public:
