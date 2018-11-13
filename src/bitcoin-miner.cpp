@@ -253,7 +253,7 @@ void proofOfWorkFinder(uint32_t idx, CBlock block, uint64_t from, uint64_t to, M
 	if (idx == 0) {
 		//uint64_t totalNonceCount = 0;
 		//for (int i = 0; i < MAX_N_THREADS; ++i) {
-			uint64_t totalNonceCount = (((int64_t) (to - from) / 35) * MAX_N_THREADS;
+			uint64_t totalNonceCount = (((int64_t) (to - from) / 35) * MAX_N_THREADS);
 			//}
 			if (GetTime() != handler->mineStartTime) {
 				double avgHashRate = ((totalNonceCount / (GetTime() - handler->mineStartTime)) / 1000.0);
