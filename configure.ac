@@ -259,6 +259,11 @@ if test "x$CXXFLAGS_overridden" = "xno"; then
   AX_CHECK_COMPILE_FLAG([-Wunused-local-typedef],[CXXFLAGS="$CXXFLAGS -Wno-unused-local-typedef"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wdeprecated-register],[CXXFLAGS="$CXXFLAGS -Wno-deprecated-register"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wimplicit-fallthrough],[CXXFLAGS="$CXXFLAGS -Wno-implicit-fallthrough"],,[[$CXXFLAG_WERROR]])
+
+  AX_CHECK_COMPILE_FLAG([-mcpu=cortex-a53+crypto+crc],[CXXFLAGS="$CXXFLAGS -mcpu=cortex-a53+crypto+crc"],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([-funroll-loops],[CXXFLAGS="$CXXFLAGS -funroll-loops"],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([--param ggc-min-expand=1],[CXXFLAGS="$CXXFLAGS --param ggc-min-expand=1"],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([--param ggc-min-heapsize=32768],[CXXFLAGS="$CXXFLAGS --param ggc-min-heapsize=32768"],,[[$CXXFLAG_WERROR]])
 fi
 
 # Check for optional instruction set support. Enabling these does _not_ imply that all code will
@@ -286,6 +291,22 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
  [ AC_MSG_RESULT(yes); enable_hwcrc32=yes],
  [ AC_MSG_RESULT(no)]
 )
+
+AC_MSG_CHECKING(for armv8 crc32 support)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+    #include <arm_acle.h>
+    #include <arm_neon.h>
+  ]],[[
+    uint64_t l = 0;
+    l = __crc32b(l, 0);
+    l = __crc32w(l, 0);
+    l = __crc32d(l, 0);
+    return l;
+  ]])],
+ [ AC_MSG_RESULT(yes); enable_armv8_crc32=yes],
+ [ AC_MSG_RESULT(no)]
+)
+
 CXXFLAGS="$TEMP_CXXFLAGS"
 
 CPPFLAGS="$CPPFLAGS -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS"
@@ -1180,6 +1201,7 @@ AM_CONDITIONAL([USE_LCOV],[test x$use_lcov = xyes])
 AM_CONDITIONAL([GLIBC_BACK_COMPAT],[test x$use_glibc_compat = xyes])
 AM_CONDITIONAL([HARDEN],[test x$use_hardening = xyes])
 AM_CONDITIONAL([ENABLE_HWCRC32],[test x$enable_hwcrc32 = xyes])
+AM_CONDITIONAL([ENABLE_ARMV8_CRC32],[test x$enable_armv8_crc32 = xyes])
 AM_CONDITIONAL([EXPERIMENTAL_ASM],[test x$experimental_asm = xyes])
 
 AC_DEFINE(CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MAJOR, [Major version])
