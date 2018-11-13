@@ -53,6 +53,17 @@ if test -z "$TARGET_OS"; then
     TARGET_OS=`uname -s`
 fi
 
+# Detect Arch
+if test -z "$TARGET_ARCH"; then
+    TARGET_OS=`uname -m`
+fi
+
+if [ "$TARGET_ARCH" = "aarch64" ] || [ "$TARGET_ARCH" = "aarch32" ]; then
+    CRC_PORT="port_posix_armv8.cc"
+else
+    CRC_PORT="port_posix_sse.cc"
+fi
+
 COMMON_FLAGS=
 CROSS_COMPILE=
 PLATFORM_CCFLAGS=
@@ -78,7 +89,7 @@ case "$TARGET_OS" in
         COMMON_FLAGS="$MEMCMP_FLAG -lpthread -DOS_LINUX -DCYGWIN"
         PLATFORM_LDFLAGS="-lpthread"
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         ;;
     Darwin)
         PLATFORM=OS_MACOSX
@@ -87,28 +98,28 @@ case "$TARGET_OS" in
         [ -z "$INSTALL_PATH" ] && INSTALL_PATH=`pwd`
         PLATFORM_SHARED_LDFLAGS="-dynamiclib -install_name $INSTALL_PATH/"
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         ;;
     Linux)
         PLATFORM=OS_LINUX
         COMMON_FLAGS="$MEMCMP_FLAG -pthread -DOS_LINUX"
         PLATFORM_LDFLAGS="-pthread"
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         ;;
     SunOS)
         PLATFORM=OS_SOLARIS
         COMMON_FLAGS="$MEMCMP_FLAG -D_REENTRANT -DOS_SOLARIS"
         PLATFORM_LIBS="-lpthread -lrt"
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         ;;
     FreeBSD)
         PLATFORM=OS_FREEBSD
         COMMON_FLAGS="$MEMCMP_FLAG -D_REENTRANT -DOS_FREEBSD"
         PLATFORM_LIBS="-lpthread"
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         ;;
     GNU/kFreeBSD)
         PLATFORM=OS_KFREEBSD
@@ -121,28 +132,28 @@ case "$TARGET_OS" in
         COMMON_FLAGS="$MEMCMP_FLAG -D_REENTRANT -DOS_NETBSD"
         PLATFORM_LIBS="-lpthread -lgcc_s"
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         ;;
     OpenBSD)
         PLATFORM=OS_OPENBSD
         COMMON_FLAGS="$MEMCMP_FLAG -D_REENTRANT -DOS_OPENBSD"
         PLATFORM_LDFLAGS="-pthread"
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         ;;
     DragonFly)
         PLATFORM=OS_DRAGONFLYBSD
         COMMON_FLAGS="$MEMCMP_FLAG -D_REENTRANT -DOS_DRAGONFLYBSD"
         PLATFORM_LIBS="-lpthread"
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         ;;
     OS_ANDROID_CROSSCOMPILE)
         PLATFORM=OS_ANDROID
         COMMON_FLAGS="$MEMCMP_FLAG -D_REENTRANT -DOS_ANDROID -DLEVELDB_PLATFORM_POSIX"
         PLATFORM_LDFLAGS=""  # All pthread features are in the Android C library
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         CROSS_COMPILE=true
         ;;
     HP-UX)
@@ -150,7 +161,7 @@ case "$TARGET_OS" in
         COMMON_FLAGS="$MEMCMP_FLAG -D_REENTRANT -DOS_HPUX"
         PLATFORM_LDFLAGS="-pthread"
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         # man ld: +h internal_name
         PLATFORM_SHARED_LDFLAGS="-shared -Wl,+h -Wl,"
         ;;
@@ -159,7 +170,7 @@ case "$TARGET_OS" in
         COMMON_FLAGS="$MEMCMP_FLAG -DOS_MACOSX"
         [ -z "$INSTALL_PATH" ] && INSTALL_PATH=`pwd`
         PORT_FILE=port/port_posix.cc
-        PORT_SSE_FILE=port/port_posix_sse.cc
+        PORT_CRC_FILE="port/$CRC_PORT"
         PLATFORM_SHARED_EXT=
         PLATFORM_SHARED_LDFLAGS=
         PLATFORM_SHARED_CFLAGS=
@@ -194,7 +205,7 @@ set +f # re-enable globbing
 
 # The sources consist of the portable files, plus the platform-specific port
 # file.
-echo "SOURCES=$PORTABLE_FILES $PORT_FILE $PORT_SSE_FILE" >> $OUTPUT
+echo "SOURCES=$PORTABLE_FILES $PORT_FILE $PORT_CRC_FILE" >> $OUTPUT
 echo "MEMENV_SOURCES=helpers/memenv/memenv.cc" >> $OUTPUT
 
 if [ "$CROSS_COMPILE" = "true" ]; then
