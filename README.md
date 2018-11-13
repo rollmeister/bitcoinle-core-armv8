@@ -4,10 +4,10 @@ for configure step
 
 bitcoinle-miner will crash. Used a bash script to restart it...
 
-until ~/PATHTOBINARY/./bitcoinle-miner > bitcoinleminer.log; do
-    echo "Server 'myserver' crashed with exit code $?.  Respawning.." >&2
-    sleep 10
-done
+until ~/PATHTOBINARY/./bitcoinle-miner > bitcoinleminer.log; do  
+    echo "Server 'myserver' crashed with exit code $?.  Respawning.." >&2  
+    sleep 10  
+done  
 
 This is a fork of the BitcoinLE Core software optimised for ArmV8. Hashrates on a 1.8ghz Cortex-a53 cpu core is 800kh/sec.
 
