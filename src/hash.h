@@ -25,7 +25,7 @@ public:
     static const size_t OUTPUT_SIZE = CSHA256::OUTPUT_SIZE;
 
     void Finalize(unsigned char hash[OUTPUT_SIZE]) {
-        unsigned char buf[CSHA256::OUTPUT_SIZE];
+        alignas(16) unsigned char buf[CSHA256::OUTPUT_SIZE];
         sha.Finalize(buf);
         sha.Reset().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(hash);
     }
@@ -49,7 +49,7 @@ public:
     static const size_t OUTPUT_SIZE = CRIPEMD160::OUTPUT_SIZE;
 
     void Finalize(unsigned char hash[OUTPUT_SIZE]) {
-        unsigned char buf[CSHA256::OUTPUT_SIZE];
+        alignas(16) unsigned char buf[CSHA256::OUTPUT_SIZE];
         sha.Finalize(buf);
         CRIPEMD160().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(hash);
     }
@@ -69,8 +69,8 @@ public:
 template<typename T1>
 inline uint256 Hash(const T1 pbegin, const T1 pend)
 {
-    static const unsigned char pblank[1] = {};
-    uint256 result;
+    alignas(16) static const unsigned char pblank[1] = {};
+    alignas(16) uint256 result;
     CHash256().Write(pbegin == pend ? pblank : (const unsigned char*)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0]))
               .Finalize((unsigned char*)&result);
     return result;
@@ -80,8 +80,8 @@ inline uint256 Hash(const T1 pbegin, const T1 pend)
 template<typename T1, typename T2>
 inline uint256 Hash(const T1 p1begin, const T1 p1end,
                     const T2 p2begin, const T2 p2end) {
-    static const unsigned char pblank[1] = {};
-    uint256 result;
+    alignas(16) static const unsigned char pblank[1] = {};
+    alignas(16) uint256 result;
     CHash256().Write(p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0]))
               .Write(p2begin == p2end ? pblank : (const unsigned char*)&p2begin[0], (p2end - p2begin) * sizeof(p2begin[0]))
               .Finalize((unsigned char*)&result);
@@ -93,8 +93,8 @@ template<typename T1, typename T2, typename T3>
 inline uint256 Hash(const T1 p1begin, const T1 p1end,
                     const T2 p2begin, const T2 p2end,
                     const T3 p3begin, const T3 p3end) {
-    static const unsigned char pblank[1] = {};
-    uint256 result;
+    alignas(16) static const unsigned char pblank[1] = {};
+    alignas(16) uint256 result;
     CHash256().Write(p1begin == p1end ? pblank : (const unsigned char*)&p1begin[0], (p1end - p1begin) * sizeof(p1begin[0]))
               .Write(p2begin == p2end ? pblank : (const unsigned char*)&p2begin[0], (p2end - p2begin) * sizeof(p2begin[0]))
               .Write(p3begin == p3end ? pblank : (const unsigned char*)&p3begin[0], (p3end - p3begin) * sizeof(p3begin[0]))
@@ -106,8 +106,8 @@ inline uint256 Hash(const T1 p1begin, const T1 p1end,
 template<typename T1>
 inline uint160 Hash160(const T1 pbegin, const T1 pend)
 {
-    static unsigned char pblank[1] = {};
-    uint160 result;
+    alignas(16) static unsigned char pblank[1] = {};
+    alignas(16) uint160 result;
     CHash160().Write(pbegin == pend ? pblank : (const unsigned char*)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0]))
               .Finalize((unsigned char*)&result);
     return result;
@@ -130,7 +130,7 @@ inline uint160 Hash160(const prevector<N, unsigned char>& vch)
 class CHashWriter
 {
 private:
-    CHash256 ctx;
+    alignas(16) CHash256 ctx;
 
     const int nType;
     const int nVersion;
@@ -147,7 +147,7 @@ public:
 
     // invalidates the object
     uint256 GetHash() {
-        uint256 result;
+        alignas(16) uint256 result;
         ctx.Finalize((unsigned char*)&result);
         return result;
     }
@@ -178,7 +178,7 @@ public:
 
     void ignore(size_t nSize)
     {
-        char data[1024];
+        alignas(16) char data[1024];
         while (nSize > 0) {
             size_t now = std::min<size_t>(nSize, 1024);
             read(data, now);
@@ -212,8 +212,8 @@ void BIP32Hash(const ChainCode &chainCode, unsigned int nChild, unsigned char he
 class CSipHasher
 {
 private:
-    uint64_t v[4];
-    uint64_t tmp;
+    alignas(16) int64_t v[4];
+    alignas(16) int64_t tmp;
     int count;
 
 public:
