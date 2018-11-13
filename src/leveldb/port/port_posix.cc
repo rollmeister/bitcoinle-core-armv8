@@ -58,6 +58,8 @@ bool HasAcceleratedCRC32C() {
   unsigned int eax, ebx, ecx, edx;
   __get_cpuid(1, &eax, &ebx, &ecx, &edx);
   return (ecx & (1 << 20)) != 0;
+#elif defined(__aarch32__) || defined(__aarch64__)
+  return true;
 #else
   return false;
 #endif
