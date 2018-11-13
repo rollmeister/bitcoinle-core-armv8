@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-int MAX_N_THREADS = 6;
+int MAX_N_THREADS = std::thread::hardware_concurrency();
 
 struct MinerHandler {
 	bool found;
@@ -118,7 +118,7 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 {
 	const CChainParams& chainparams = Params();
 
-	uint32_t WAIT_TIME = 1000;
+	uint32_t WAIT_TIME = 400;
 	uint32_t PRINTF_PERIOD = 10000;
 
 	std::shared_ptr<Metronome::CMetronomeBeat> beat;
@@ -161,7 +161,7 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 
 		//if (i % (PRINTF_PERIOD / WAIT_TIME) == 0) {
 			//printf("Current Height: %d\n", pindexPrev->nHeight);
-			printf("Waiting for metronome beat... %lu ms\n", i * WAIT_TIME);
+			//printf("Waiting for metronome beat... %lu ms\n", i * WAIT_TIME);
 		//}
 
 		MilliSleep(WAIT_TIME);
@@ -212,44 +212,56 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 void proofOfWorkFinder(uint32_t idx, CBlock block, uint64_t from, uint64_t to, MinerHandler* handler, uint64_t PAGE_SIZE_MINER) {
 	const CChainParams& chainparams = Params();
 	block.nNonce = from;
+        uint64_t limit = (to - from) / 35;
+        //uint32_t start = 0;
 	while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus())) {
 		handler->currentOffset[idx] = block.nNonce;
 
-		if (handler->found || handler->interrupt) {
+		 if (handler->interrupt) {
 			block.SetNull();
 			break;
 		}
 
-		if (chainActive.Tip()->GetBlockHash().GetHex() != block.hashPrevBlock.GetHex()) {
+		/* if (chainActive.Tip()->GetBlockHash().GetHex() != block.hashPrevBlock.GetHex()) {
 			if (idx == 0) {
 				printf("\nSomeone else mined a block! Restarting...\n");
 			}
 			block.SetNull();
 			break;
-		}
-
+		}*/
+		//start++;
 		block.nNonce++;
+		limit--;
 
-		if (block.nNonce >= to || block.nNonce < from) {
+                if(limit == 0) {
+                        block.SetNull();
+                        break;
+                }
+
+		/*if (block.nNonce >= to || block.nNonce < from) {
 			block.SetNull();
 			break;
 		}
 
 		if (block.nNonce % 10 == 0) {
 			block.nTime = GetAdjustedTime();
-		}
+		}*/
 
-		if (idx == 0 && block.nNonce % 100000 == 0) {
-			uint64_t totalNonceCount = 0;
-			for (int i = 0; i < MAX_N_THREADS; ++i) {
-				totalNonceCount += ((int64_t) handler->currentOffset[i]) - i * PAGE_SIZE_MINER;
-			}
+
+	}
+
+	if (idx == 0) {
+		//uint64_t totalNonceCount = 0;
+		//for (int i = 0; i < MAX_N_THREADS; ++i) {
+			uint64_t totalNonceCount = (((int64_t) (to - from) / 35) * MAX_N_THREADS;
+			//}
 			if (GetTime() != handler->mineStartTime) {
-				double avgHashRate = ((totalNonceCount / (GetTime() - handler->mineStartTime)) / 1024.0);
+				double avgHashRate = ((totalNonceCount / (GetTime() - handler->mineStartTime)) / 1000.0);
 				std::cout << "Hashrate: " << avgHashRate << " kH/s\r";
-			}
 		}
 	}
+
+	block.nTime = GetAdjustedTime();
 
 	if (block.IsNull()) {
 		//printf("Ending thread: %d\n", idx);
