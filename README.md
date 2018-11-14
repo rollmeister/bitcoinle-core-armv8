@@ -16,10 +16,6 @@ You do not need an established Bitcoin Wallet with balance to run Bitcoin Core.
 
 bitcoinle-miner (for solo mining) also works as a BitcoinLE wallet.
 
-DOWNLOAD THE SOLO MINING ON ARMV8 STARTUP GUIDE FROM...
-
-https://drive.google.com/open?id=1KfOKRjyN9sCnnhtu8SuBkitJqZdHraIA
-
 Pruned Bitcoin Blockchain. Suitable for running a Bitcoin Wallet as a Metronome for the solo miner. Takes hours, instead of weeks to sync. Date of archive sync 13-11-2018. Less than 3gb download.  
 https://drive.google.com/open?id=1N35z4iKCwD4rcrCvZ8IV5F8VpQ0kj6M4
 
