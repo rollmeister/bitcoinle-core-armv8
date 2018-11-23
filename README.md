@@ -61,7 +61,7 @@ press ctrl+c to exit
 ```
 ./bitcoinle-miner # to start solo mining
 ```
-If you experience solo miner crashes, doing a fresh BLE blockchain sync, deleting the .bitcoinLE/blocks and .bitcoinLE/chainstate folders and running bitcoinled for ten minutes should may solve it.  
+If you experience solo miner crashes, doing a fresh BLE blockchain sync, deleting the .bitcoinLE/blocks and .bitcoinLE/chainstate folders and running bitcoinled for ten minutes may solve it.  
 
 ###### Pruned Bitcoin Blockchain.  
 Suitable for running a Bitcoin Wallet as a Metronome for the solo miner. Takes hours/days, instead of weeks to sync. Date of current archive sync 13-11-2018. Less than 3gb download but requires 3.5gb free space.  
