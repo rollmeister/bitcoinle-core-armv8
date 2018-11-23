@@ -35,15 +35,16 @@
 #include <stdio.h>
 #include <unistd.h>
 
-int MAX_N_THREADS = 6;
+int MAX_N_THREADS = std::thread::hardware_concurrency();
 
 struct MinerHandler {
 	bool found;
 	bool interrupt;
+	bool stop;
 	CBlock block;
-	uint64_t mineStartTime;
+	int64_t mineStartTime;
 	uint64_t* currentOffset;
-	MinerHandler() : found(false), block(CBlock()), interrupt(false) {
+	MinerHandler() : found(false), interrupt(false), stop(false), block(CBlock()) {
 	}
 	~MinerHandler() {
 		delete currentOffset;
@@ -55,6 +56,7 @@ struct MinerHandler {
 		found = false;
 		block = CBlock();
 		interrupt = false;
+		stop = false;
 		mineStartTime = 0;
 	}
 };
@@ -70,10 +72,9 @@ void wait4Sync() {
 	if (headBlock) {
 		height = headBlock -> nHeight;
 	}
-	printf("\n");
 	// if height is stable for 30 seconds, assume sync
-	int SYNC_WAIT = 30;
-	for (;;) {
+	int SYNC_WAIT = 10;
+	while(true) {
 		if (handler.interrupt) {
 			return;
 		}
@@ -107,7 +108,7 @@ uint64_t wait4Peers() {
 		if (handler.interrupt) {
 			return 0;
 		}
-		printf("WARNING: waiting for node to become online (%d)\r", i);
+		printf("NOTICE: waiting for Peer Node(s) to connect (%lu)\n", i);
 		++i;
 		MilliSleep(1000);
 	}
@@ -118,8 +119,11 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 {
 	const CChainParams& chainparams = Params();
 
-	uint32_t WAIT_TIME = 1000;
-	uint32_t PRINTF_PERIOD = 10000;
+	uint32_t WAIT_TIME = 500;
+	std::string waitingspinner = "|";
+	uint32_t spinnerposition = 0;
+	bool printwaitingmessage = true;
+	//uint32_t PRINTF_PERIOD = 10000;
 
 	std::shared_ptr<Metronome::CMetronomeBeat> beat;
 	uint64_t i = wait4Peers();
@@ -130,7 +134,7 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 	}
 	printf("\n");
 
-	for (uint64_t i = 0;;++i) {
+	while(true) {
 		if (handler.interrupt) {
 			return CBlock();
 		}
@@ -141,7 +145,7 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 		CBlockIndex* headBlock = chainActive.Tip();
 		
 		std::shared_ptr<Metronome::CMetronomeBeat> currentBeat = Metronome::CMetronomeHelper::GetBlockInfo(headBlock->hashMetronome);
-
+		MilliSleep(WAIT_TIME);
 		if (currentBeat && !currentBeat->nextBlockHash.IsNull()) {
 			//printf("Cenas = %s", currentBeat->nextBlockHash.GetHex().c_str());
 
@@ -161,10 +165,22 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 
 		//if (i % (PRINTF_PERIOD / WAIT_TIME) == 0) {
 			//printf("Current Height: %d\n", pindexPrev->nHeight);
-			printf("Waiting for metronome beat... %lu ms\n", i * WAIT_TIME);
+			//printf("Waiting for metronome beat... %lu ms\n", i * WAIT_TIME);
 		//}
+		//printf("Waiting for metronome beat... %c \r", waitingspinner); fflush(stdout);
+		if(printwaitingmessage) {
+			std::cout << "Waiting for metronome beat..." << waitingspinner << "\r" << std::flush;
+			switch(spinnerposition) {
+				case 0: { spinnerposition++ ; waitingspinner = "/"; break; }
+				case 1: { spinnerposition++ ; waitingspinner = "-"; break; }
+				case 2: { spinnerposition++ ; waitingspinner = "\\"; break; }
+				case 3: { spinnerposition = 0; waitingspinner = "|"; break; }
+				default: { break; }
+			}
+		}
 
-		MilliSleep(WAIT_TIME);
+		printwaitingmessage = (printwaitingmessage) ? false : true;
+
 	}
 
 	printf("\nCreating new block...\n");
@@ -212,61 +228,100 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 void proofOfWorkFinder(uint32_t idx, CBlock block, uint64_t from, uint64_t to, MinerHandler* handler, uint64_t PAGE_SIZE_MINER) {
 	const CChainParams& chainparams = Params();
 	block.nNonce = from;
-	while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus())) {
-		handler->currentOffset[idx] = block.nNonce;
+	int64_t startmstime = 0;
+	// Use separate variables for storing current and new BLE block hash values
+	std::string hashPrevBlock, chaintipblockhash;
 
-		if (handler->found || handler->interrupt) {
-			block.SetNull();
-			break;
+	if(idx == 0) {
+		// Keep trying to retrieve previous hash from block object until success
+		// This value is static but rereading from chainActive.Tip()->GetBlockHash() &
+		// block.hashPrevBlock objects aggresively during mining has been unreliable and caused 
+		// segfault or to return invalid hash string resulting in premature abort during mining.
+		while(hashPrevBlock.length() < 64 && !handler->interrupt && !handler->stop) { 
+			hashPrevBlock = block.hashPrevBlock.GetHex();
+			MilliSleep(5);
 		}
+ 		startmstime = GetTimeMillis();
+	}
+	while(!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus())) {
 
-		if (chainActive.Tip()->GetBlockHash().GetHex() != block.hashPrevBlock.GetHex()) {
-			if (idx == 0) {
-				printf("\nSomeone else mined a block! Restarting...\n");
-			}
+		if(handler->stop) {
+			// Sleep briefly freeing up cpu for post mining session operations
+			MilliSleep(100);
+			handler->currentOffset[idx] = block.nNonce;
 			block.SetNull();
 			break;
 		}
 
 		block.nNonce++;
 
-		if (block.nNonce >= to || block.nNonce < from) {
-			block.SetNull();
-			break;
+		// Exit checks & block time property update done every 500k cycles 
+		if(block.nNonce % 500000 == 0) {
+ 			block.nTime = GetAdjustedTime();
+			// Only have the first thread check for externally found blocks and process cancellations
+			// informing other mining threads to quit via new handler member 'stop' value
+			if(idx == 0) {
+				if(handler->interrupt) {
+					handler->stop = true;
+				}
+				// Free up cpu on thread give chainActive chance to update
+				MilliSleep(5);
+				// Persistant retrieval for added externally mined block hash
+				while((chaintipblockhash != chainActive.Tip()->GetBlockHash().GetHex() 
+					|| chaintipblockhash.length() < 64) && !handler->stop && !handler->interrupt) {
+					MilliSleep(5);
+					chaintipblockhash = chainActive.Tip()->GetBlockHash().GetHex();
+				}
+				if(chaintipblockhash != hashPrevBlock) {
+					printf("\nSomeone else mined a block! Restarting...\n");
+					handler->stop = true;
+				}
+			}
+			if(block.nNonce >= to || block.nNonce < from) {
+				MilliSleep(10);
+				block.SetNull();
+				break;
+			}
 		}
+	}
 
-		if (block.nNonce % 10 == 0) {
-			block.nTime = GetAdjustedTime();
-		}
-
-		if (idx == 0 && block.nNonce % 100000 == 0) {
+	// Mining performance summary
+	if(idx == 0) {
 			uint64_t totalNonceCount = 0;
 			for (int i = 0; i < MAX_N_THREADS; ++i) {
 				totalNonceCount += ((int64_t) handler->currentOffset[i]) - i * PAGE_SIZE_MINER;
 			}
+
 			if (GetTime() != handler->mineStartTime) {
-				double avgHashRate = ((totalNonceCount / (GetTime() - handler->mineStartTime)) / 1024.0);
-				std::cout << "Hashrate: " << avgHashRate << " kH/s\r";
+				double secondsmining = (double)(GetTimeMillis() - startmstime) / 1000;
+				double avgHashRate = (totalNonceCount / secondsmining)  / 1000;
+				std::cout << "Hashrate: " << setprecision(2) << avgHashRate << " kH/s for " << setprecision(2) << secondsmining << " Seconds.";
 			}
-		}
 	}
 
 	if (block.IsNull()) {
 		//printf("Ending thread: %d\n", idx);
 		return;
 	}
-
-	if (!hasPeers()) {
-		printf("WARNING: node is offline.\n");
-		return;
+	
+	if(!hasPeers()) { 
+		printf("WARNING: No connections to Node Peers for block submission...retrying for 5 seconds\n");
+		// If no peers retry for 5 seconds
+		uint32_t waitforpeers = 50;
+		while(!hasPeers() && waitforpeers) {
+			MilliSleep(100);
+			waitforpeers--;
+		}
+		// Give up submitting new block if still no peers
+		if(!hasPeers()) { return; }
 	}
-
+	handler->stop = true;
 	handler->found = true;
 	handler->block = block;
 
 	//MilliSleep(1000);
 
-	printf("Processing new block: %s, BlockTime: %lu, Now: %lu\n", block.GetHash().GetHex().c_str(), block.GetBlockTime(), GetTime());
+	printf("Submitting newly mined block: %s, BlockTime: %lu, Now: %lu\n", block.GetHash().GetHex().c_str(), block.GetBlockTime(), GetTime());
 
 	//block.nTime += 120;
 
@@ -311,7 +366,7 @@ int main(int argc, char* argv[])
 	try
 	{
 		gArgs.ReadConfigFile(gArgs.GetArg("-conf", BITCOIN_CONF_FILENAME));
-		MAX_N_THREADS = gArgs.GetArg("-threads", 6);
+		MAX_N_THREADS = gArgs.GetArg("-threads", MAX_N_THREADS);
 	}
 	catch (const std::exception& e) {
 		fprintf(stderr, "Error reading configuration file: %s\n", e.what());
@@ -367,8 +422,18 @@ int main(int argc, char* argv[])
 
 	// Como converter uma coinbase key em bitcoin address
 	//CBitcoinAddress addr(coinbaseKey.GetPubKey().GetID());
+#if defined(__aarch32__) || defined(__aarch64__)
+	std::cout << std::endl << "You are using BitcoinLE Core ArmV8 Solo Miner (alpha 16.8) " << std::endl;
+	std::cout << "https://github.com/rollmeister/bitcoinle-core-armv8" << std::endl;
+	std::cout << "It is recommended to sync its blockchain by first running bitcoinled" << std::endl;
+	std::cout << "for at least 10 minutes beforehand, if the last sync was done over 6 hours ago..." << std::endl;
+	std::cout << "You can also copy over the 'blocks' and 'chainstate' folders of a recently run " << std::endl;
+	std::cout << "and fully synced BitcoinLE-qt wallet." << std::endl;
+	std::cout << "Delete the two folders of the solo miner local work folder " << std::endl;
+	std::cout << "(default is '.bitcoinLE') first if you intend to do so." << std::endl;
+	std::cout << "This version does not include the optimized Miner yet. 500-1000 % improvements to hashrate are expected in a future release." << std::endl << std::endl;
+#endif
 	std::cout << "Wallet Count: " << vpwallets.size() << std::endl;
-
 	// CBitcoinAddress addr("JhZGKE8uFDTmCA1gce1wnr4FU9ip7LRe3f");
 	// std::string s = addr.ToString();
 	// printf("Payment Address: %s\n\n", s.c_str());
