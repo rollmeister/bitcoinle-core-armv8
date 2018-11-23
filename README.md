@@ -24,7 +24,9 @@ make CC="gcc-8" CXX="g++-8"
 strip src/bitcoinled; strip src/bitcoinle-miner; strip src/bitcoinle-cli; strip src/bitcoinle-tx;
 ```
 ###### Choice of compiler.
-GCC8.1 is available for 64-bit Ubuntu 16.04 on aarch64(ArmV8). Slowest compile but fastest binaries. Requires 1gb both ram and swap memory.  
+GCC8.1 is available for 64-bit Ubuntu 16.04 on aarch64(ArmV8). Slowest compile but faster & smaller binaries. Requires 1gb both ram and swap memory. Please consider donating to Jonathan for his good work in making GCC 8.1 available  
+https://www.buymeacoffee.com/jonathon
+https://paypal.me/jnthnf
 ```
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test 
 sudo add-apt-repository ppa:jonathonf/gcc  
@@ -37,7 +39,7 @@ sudo apt install clang-6.0
 ./configure CC="clang-6.0" CXX="clang++-6.0" --disable-tests --disable-bench
 make CC="clang-6.0" CXX="clang++-6.0"
 ```
-bitcoinle-miner may crash. Use a bash script to restart it...
+bitcoinle-miner may crash. Use a bash code in script to restart it...
 ```
 until ~/PATHTOBINARY/./bitcoinle-miner > bitcoinleminer.log; do  
     echo "Server 'myserver' crashed with exit code $?.  Respawning.." >&2  
@@ -46,14 +48,23 @@ done
 ```
 There is a slow memory leak in the software so restarting say using a cron job once a week is recommended.  
 
-This is a fork of the BitcoinLE Core software optimised for ArmV8. Hashrates on a 1.8ghz Cortex-a53 cpu core is 800kh/sec. 500-1000% improvements to hashrates are foreseen. Keep checking repo for updates.  
+This is a fork of the BitcoinLE Core software optimised for ArmV8. Hashrates on a 1.8ghz Cortex-a53 cpu core is 900kh/sec. 500-1000% improvements to hashrates are foreseen. Keep checking repo for updates.  
 
 BitcoinLE Core (BLE) requires Bitcoin (BTC) Core running separately as a Metronome.
 You do not need an established Bitcoin Wallet with balance to run Bitcoin Core.
 
-bitcoinle-miner (for solo mining) also works as a BitcoinLE wallet.
+bitcoinle-miner (for solo mining) also works as a BitcoinLE wallet. Is is not good practise to use the same wallet.dat for multiple miners. For multiple devices, copy the only the bitcoin.conf file (if you want all solo miners to use same parameters) into .bitcoinLE folder and run bitcoind for 10 minutes on first run, and for everytime you run the solo miner and the BitcoinLE blockchain copy has not been synced for 1 day or more. The bitcoinle-miner has difficulty syncing the BitcoinLE (BLE) blockchain by itself.  
+```
+./bitcoindled  #for ten minutes  
+```
+press ctrl+c to exit
+```
+./bitcoinle-miner # to start solo mining
+```
+If you experience solo miner crashes, doing a fresh BLE blockchain sync, deleting the .bitcoinLE/blocks and .bitcoinLE/chainstate folders and running bitcoinled for ten minutes should may solve it.  
 
-Pruned Bitcoin Blockchain. Suitable for running a Bitcoin Wallet as a Metronome for the solo miner. Takes hours, instead of weeks to sync. Date of archive sync 13-11-2018. Less than 3gb download.  
+###### Pruned Bitcoin Blockchain.  
+Suitable for running a Bitcoin Wallet as a Metronome for the solo miner. Takes hours/days, instead of weeks to sync. Date of current archive sync 13-11-2018. Less than 3gb download but requires 3.5gb free space.  
 https://drive.google.com/open?id=1N35z4iKCwD4rcrCvZ8IV5F8VpQ0kj6M4
 
 Extract on Linux using...  
