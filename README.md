@@ -12,6 +12,17 @@ chmod x+u autogen.sh #only need to do this line once
 ./configure --disable-tests --disable-bench  
 make
 ```
+Specify compiler to use with CC & CXX parameters e.g.  
+```
+chmod x+u autogen.sh #only need to do this line once
+./autogen.sh
+./configure CC="gcc-8" CXX="g++-8" --disable-tests --disable-bench
+make CC="gcc-8" CXX="g++-8"
+```
+###### Optionally strip binary of bloat (less ram consumption)
+```
+strip src/bitcoinled; strip src/bitcoinle-miner; strip src/bitcoinle-cli; strip src/bitcoinle-tx;
+```
 ###### Choice of compiler.
 GCC8.1 is available for 64-bit Ubuntu 16.04 on aarch64(ArmV8). Slowest compile but fastest binaries. Requires 1gb both ram and swap memory.  
 ```
@@ -23,8 +34,9 @@ sudo install gcc-8 g++-8
 Alternatively Clang 6.0, faster compile less memory requirements. Can compile with make -j 2 on 1gb boards, with a swap file.
 ```
 sudo apt install clang-6.0
+./configure CC="clang-6.0" CXX="clang++-6.0" --disable-tests --disable-bench
+make CC="clang-6.0" CXX="clang++-6.0"
 ```
-
 bitcoinle-miner may crash. Use a bash script to restart it...
 ```
 until ~/PATHTOBINARY/./bitcoinle-miner > bitcoinleminer.log; do  
