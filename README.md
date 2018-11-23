@@ -2,7 +2,7 @@ Compiling requires
 ./configure --disable-tests --disable-bench  
 for configure step
 
-bitcoinle-miner will crash. Used a bash script to restart it...
+bitcoinle-miner may crash. Used a bash script to restart it...
 
 until ~/PATHTOBINARY/./bitcoinle-miner > bitcoinleminer.log; do  
     echo "Server 'myserver' crashed with exit code $?.  Respawning.." >&2  
@@ -52,9 +52,6 @@ addnode=seed3.bitcoinle.org
 # Bitcoin Core (e.g. for use as a Metronome) optimised fork  
 Binary downloads available for aarch64/Ubuntu 16.04  
 https://github.com/rollmeister/bitcoin-armv8  
-
-During solo minig, when the bitcoinle-miner receives a beat from the Metronome it mines for up to 45 seconds, unless it finds a valid block before. Previously the miner stopped as soon it detected a block was already mined by someone else, however this had a bug that caused a segfault and so a fixed mining period was set as a work around.  
-This is still alpha software.
 
 There is a slow memory leak in the software so restarting say using a cron job once a week is recommended.
 
