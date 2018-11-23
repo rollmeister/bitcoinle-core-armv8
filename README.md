@@ -55,7 +55,7 @@ You do not need an established Bitcoin Wallet with balance to run Bitcoin Core.
 
 bitcoinle-miner (for solo mining) also works as a BitcoinLE wallet. Is is not good practise to use the same wallet.dat for multiple miners. For multiple devices, copy the only the bitcoin.conf file (if you want all solo miners to use same parameters) into .bitcoinLE folder and run bitcoind for 10 minutes on first run, and for everytime you run the solo miner and the BitcoinLE blockchain copy has not been synced for 1 day or more. The bitcoinle-miner has difficulty syncing the BitcoinLE (BLE) blockchain by itself.  
 ```
-./bitcoindled  #for ten minutes  
+./bitcoinled  #for ten minutes  
 ```
 press ctrl+c to exit
 ```
