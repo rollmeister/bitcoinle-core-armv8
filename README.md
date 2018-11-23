@@ -1,17 +1,33 @@
-Compiling requires  
+Compiling requires (see also choice of compiler before this step)  
+```
+chmod x+u autogen.sh #only need to do this line once
+./autogen.sh
 ./configure --disable-tests --disable-bench  
-for configure step
+make
+```
+###### Choice of compiler.
+GCC8.1 is available for 64-bit Ubuntu 16.04 on aarch64(ArmV8). Slowest compile but fastest binaries. Requires 1gb both ram and swap memory.  
+```
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test 
+sudo add-apt-repository ppa:jonathonf/gcc  
+sudo apt update
+sudo install gcc-8 g++-8
+```
+Alternatively Clang 6.0, faster compile less memory requirements. Can compile with make -j 2 on 1gb boards, with a swap file.
+```
+sudo apt install clang-6.0
+```
 
-bitcoinle-miner may crash. Used a bash script to restart it...
-
+bitcoinle-miner may crash. Use a bash script to restart it...
+```
 until ~/PATHTOBINARY/./bitcoinle-miner > bitcoinleminer.log; do  
     echo "Server 'myserver' crashed with exit code $?.  Respawning.." >&2  
     sleep 10  
 done  
-
+```
 There is a slow memory leak in the software so restarting say using a cron job once a week is recommended.  
 
-This is a fork of the BitcoinLE Core software optimised for ArmV8. Hashrates on a 1.8ghz Cortex-a53 cpu core is 800kh/sec.
+This is a fork of the BitcoinLE Core software optimised for ArmV8. Hashrates on a 1.8ghz Cortex-a53 cpu core is 800kh/sec. 500-1000% improvements to hashrates are foreseen. Keep checking repo for updates.  
 
 BitcoinLE Core (BLE) requires Bitcoin (BTC) Core running separately as a Metronome.
 You do not need an established Bitcoin Wallet with balance to run Bitcoin Core.
@@ -22,10 +38,13 @@ Pruned Bitcoin Blockchain. Suitable for running a Bitcoin Wallet as a Metronome 
 https://drive.google.com/open?id=1N35z4iKCwD4rcrCvZ8IV5F8VpQ0kj6M4
 
 Extract on Linux using...  
+```
 tar xvjf prunedbtcblockchain.tar.bz2 ~/.bitcoin  
+```
 (goes into bitcoin core app folder)  
 
-# Add this to bitcoin.conf (of your bitcoin (NOT bitcoinle) app data folder)  
+###### Add this to bitcoin.conf (of your bitcoin (NOT bitcoinle) app data folder)  
+```
 prune=550  
 checklevel=2  
 checkblocks=10  
@@ -40,8 +59,9 @@ rpcallowip=0.0.0.0/0
 #OR allow only lan connections. e.g. IP class 192.168.10 (the first three numbers of your lan ip address)  
 #rpcallowip=192.168.10/24  
 server=1  
-
-# Add Metronome details for BitcoinLE Core ArmV8 into .bitcoinle/bitcoin.conf  
+```
+###### Add Metronome details for BitcoinLE Core ArmV8 into .bitcoinle/bitcoin.conf  
+```
 metronomeAddr=xxx.xxx.xxx.xxx  
 metronomePort=8332  
 metronomeUser=YOURMETRONOMEusername  
@@ -50,9 +70,9 @@ upnp=1
 addnode=seed1.bitcoinle.org  
 addnode=seed2.bitcoinle.org  
 addnode=seed3.bitcoinle.org  
-
-# Bitcoin Core (e.g. for use as a Metronome) optimised fork  
-Binary downloads available for aarch64/Ubuntu 16.04  
+```
+###### Bitcoin Core (e.g. for use as a Metronome) optimised fork  
+Binary downloads also available for aarch64/Ubuntu 16.04  
 https://github.com/rollmeister/bitcoin-armv8  
 
 Bitcoin LE Core integration/staging tree
