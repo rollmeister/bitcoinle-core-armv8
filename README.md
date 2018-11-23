@@ -1,3 +1,10 @@
+Git newbies, how to to install repo sources into a folder. Refer to docs/build-unix.md for other software dependencies install.  
+```
+sudo apt install git
+git clone https://github.com/rollmeister/bitcoinle-core-armv8.git #replace_with_optional_custom_folder_name
+cd bitcoinle-core-armv8 #default folder repo is cloned into
+```
+Pre-compiled available in binaries folder, might work for you. Otherwise...  
 Compiling requires (see also choice of compiler before this step)  
 ```
 chmod x+u autogen.sh #only need to do this line once
