@@ -297,7 +297,7 @@ void proofOfWorkFinder(uint32_t idx, CBlock block, uint64_t from, uint64_t to, M
 			if (GetTime() != handler->mineStartTime) {
 				double secondsmining = (double)(GetTimeMillis() - startmstime) / 1000;
 				double avgHashRate = (totalNonceCount / secondsmining)  / 1000;
-				std::cout << "Hashrate: " << setprecision(2) << avgHashRate << " kH/s for " << setprecision(2) << secondsmining << " Seconds.";
+				std::cout << "Hashrate: " << std::setprecision(2) << avgHashRate << " kH/s for " << std::setprecision(2) << secondsmining << " Seconds.";
 			}
 	}
 
