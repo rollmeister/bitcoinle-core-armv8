@@ -9,6 +9,8 @@ until ~/PATHTOBINARY/./bitcoinle-miner > bitcoinleminer.log; do
     sleep 10  
 done  
 
+There is a slow memory leak in the software so restarting say using a cron job once a week is recommended.  
+
 This is a fork of the BitcoinLE Core software optimised for ArmV8. Hashrates on a 1.8ghz Cortex-a53 cpu core is 800kh/sec.
 
 BitcoinLE Core (BLE) requires Bitcoin (BTC) Core running separately as a Metronome.
@@ -52,8 +54,6 @@ addnode=seed3.bitcoinle.org
 # Bitcoin Core (e.g. for use as a Metronome) optimised fork  
 Binary downloads available for aarch64/Ubuntu 16.04  
 https://github.com/rollmeister/bitcoin-armv8  
-
-There is a slow memory leak in the software so restarting say using a cron job once a week is recommended.
 
 Bitcoin LE Core integration/staging tree
 =====================================
