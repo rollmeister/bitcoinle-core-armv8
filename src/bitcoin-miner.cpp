@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <iostream>     // std::cout, std::fixed
 #include <iomanip>      // std::setprecision
 
 int MAX_N_THREADS = std::thread::hardware_concurrency();
