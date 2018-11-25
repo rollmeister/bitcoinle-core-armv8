@@ -259,11 +259,17 @@ if test "x$CXXFLAGS_overridden" = "xno"; then
   AX_CHECK_COMPILE_FLAG([-Wunused-local-typedef],[CXXFLAGS="$CXXFLAGS -Wno-unused-local-typedef"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wdeprecated-register],[CXXFLAGS="$CXXFLAGS -Wno-deprecated-register"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wimplicit-fallthrough],[CXXFLAGS="$CXXFLAGS -Wno-implicit-fallthrough"],,[[$CXXFLAG_WERROR]])
-
-  AX_CHECK_COMPILE_FLAG([-mcpu=cortex-a53+crypto+crc],[CXXFLAGS="$CXXFLAGS -mcpu=cortex-a53+crypto+crc"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-funroll-loops],[CXXFLAGS="$CXXFLAGS -funroll-loops"],,[[$CXXFLAG_WERROR]])
-  AX_CHECK_COMPILE_FLAG([--param ggc-min-expand=1],[CXXFLAGS="$CXXFLAGS --param ggc-min-expand=1"],,[[$CXXFLAG_WERROR]])
-  AX_CHECK_COMPILE_FLAG([--param ggc-min-heapsize=32768],[CXXFLAGS="$CXXFLAGS --param ggc-min-heapsize=32768"],,[[$CXXFLAG_WERROR]])
+
+  ## Reduce GCC memory consumption on Arm
+  AC_CHECK_DEFINE([__arm__],[CXXFLAGS="$CXXFLAGS --param ggc-min-expand=1 --param ggc-min-heapsize=32768 -g0 -Os"],,[[$CXXFLAG_WERROR]])
+  AC_CHECK_DEFINE([__aarch64__],[CXXFLAGS="$CXXFLAGS --param ggc-min-expand=1 --param ggc-min-heapsize=32768 -g0"],,[[$CXXFLAG_WERROR]])
+  ## ArmV8 specific flags
+  AC_CHECK_DEFINE([__aarch64__],[CXXFLAGS="$CXXFLAGS -mcpu=cortex-a53+crypto+crc"],,[[$CXXFLAG_WERROR]])
+  ## __aarch32__ specific flags
+  AC_CHECK_DEFINE([__aarch32__],[CXXFLAGS="$CXXFLAGS -march=armv8-a+simd -mcpu=cortex-a53+crypto+crc -mfpu=crypto-neon-fp-armv8"],,[[$CXXFLAG_WERROR]])
+  ## Suppress warning from Clang for ignored parameters
+  AX_CHECK_COMPILE_FLAG([-Wno-unused-command-line-argument],[CXXFLAGS="$CXXFLAGS -Wno-unused-command-line-argument"],,[[$CXXFLAG_WERROR]])
 fi
 
 # Check for optional instruction set support. Enabling these does _not_ imply that all code will
