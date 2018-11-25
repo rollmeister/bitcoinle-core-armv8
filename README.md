@@ -12,7 +12,7 @@ git pull
 Pre-compiled available in binaries folder, might work for you. Otherwise...  
 Compiling requires (see also choice of compiler before this step)  
 ```
-chmod x+u autogen.sh #only need to do this line once
+chmod +x autogen.sh #only need to do this line once
 ./autogen.sh
 ./configure --disable-tests --disable-bench  
 make
