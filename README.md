@@ -2,7 +2,12 @@ Git newbies, how to to install repo sources into a folder. Refer to docs/build-u
 ```
 sudo apt install git
 git clone https://github.com/rollmeister/bitcoinle-core-armv8.git #replace_with_optional_custom_folder_name
-cd bitcoinle-core-armv8 #default folder repo is cloned into
+#default folder repo is cloned into
+cd bitcoinle-core-armv8  
+```
+To retrieve the updates to the repo into your clone . cd into repo's folder first...  
+```
+git pull
 ```
 Pre-compiled available in binaries folder, might work for you. Otherwise...  
 Compiling requires (see also choice of compiler before this step)  
@@ -86,7 +91,7 @@ upnp=1
 rpcuser=YOURMETRONOMEusername  
 rpcpassword=YOURMETRONOMEpassword  
 rpcallowip=0.0.0.0/0  
-#OR allow only lan connections. e.g. IP class 192.168.10 (the first three numbers of your lan ip address)  
+# OR allow only lan connections. e.g. IP class 192.168.10 (the first three numbers of your lan ip address)  
 #rpcallowip=192.168.10/24  
 server=1  
 ```
@@ -100,6 +105,17 @@ upnp=1
 addnode=seed1.bitcoinle.org  
 addnode=seed2.bitcoinle.org  
 addnode=seed3.bitcoinle.org  
+listen=1  
+dbcache=8  
+rpcport=8330  
+upnp=1  
+rpcuser=YOURCHOSENBLEWalletusername  
+rpcpassword=YOURCHOSENBLEWalletpassword  
+# Uncomment next line if need rpc connections from internet
+#rpcallowip=0.0.0.0/0  
+# Allow only lan connections. e.g. IP class 192.168.10 (the first three numbers of your lan ip address)  
+rpcallowip=192.168.10/24  
+server=1  
 ```
 ###### Bitcoin Core (e.g. for use as a Metronome) optimised fork  
 Binary downloads also available for aarch64/Ubuntu 16.04  
