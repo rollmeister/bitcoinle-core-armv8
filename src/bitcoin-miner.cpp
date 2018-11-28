@@ -110,7 +110,7 @@ uint64_t wait4Peers() {
 		if (handler.interrupt) {
 			return 0;
 		}
-		printf("NOTICE: waiting for Peer Node(s) to connect (%lu)\n", i);
+		printf("NOTICE: waiting for BitcoinLE Peer Node(s) to connect (%lu)\n", i);
 		++i;
 		MilliSleep(1000);
 	}
@@ -121,10 +121,11 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 {
 	const CChainParams& chainparams = Params();
 
-	uint32_t WAIT_TIME = 500;
+	const uint64_t MS_WAIT_TIME = 500;
 	std::string waitingspinner = "|";
 	uint32_t spinnerposition = 0;
 	bool printwaitingmessage = true;
+	uint64_t secondswaiting = 0;
 	//uint32_t PRINTF_PERIOD = 10000;
 
 	std::shared_ptr<Metronome::CMetronomeBeat> beat;
@@ -147,7 +148,7 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 		CBlockIndex* headBlock = chainActive.Tip();
 		
 		std::shared_ptr<Metronome::CMetronomeBeat> currentBeat = Metronome::CMetronomeHelper::GetBlockInfo(headBlock->hashMetronome);
-		MilliSleep(WAIT_TIME);
+		MilliSleep(MS_WAIT_TIME);
 		if (currentBeat && !currentBeat->nextBlockHash.IsNull()) {
 			//printf("Cenas = %s", currentBeat->nextBlockHash.GetHex().c_str());
 
@@ -171,16 +172,18 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 		//}
 		//printf("Waiting for metronome beat... %c \r", waitingspinner); fflush(stdout);
 		if(printwaitingmessage) {
-			std::cout << "Waiting for metronome beat..." << waitingspinner << "\r" << std::flush;
-			switch(spinnerposition) {
+			std::cout << "Waiting for metronome beat (" << 
+			(secondswaiting * (MS_WAIT_TIME * 2)) / 1000 << "s)...\r" << std::flush;
+		// << waitingspinner << "\r" << std::flush;
+		/*	switch(spinnerposition) {
 				case 0: { spinnerposition++ ; waitingspinner = "/"; break; }
 				case 1: { spinnerposition++ ; waitingspinner = "-"; break; }
 				case 2: { spinnerposition++ ; waitingspinner = "\\"; break; }
 				case 3: { spinnerposition = 0; waitingspinner = "|"; break; }
 				default: { break; }
-			}
+			}*/
+		secondswaiting++;
 		}
-
 		printwaitingmessage = (printwaitingmessage) ? false : true;
 
 	}
@@ -230,10 +233,13 @@ CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const
 void proofOfWorkFinder(uint32_t idx, CBlock block, uint64_t from, uint64_t to, MinerHandler* handler, uint64_t PAGE_SIZE_MINER) {
 	const CChainParams& chainparams = Params();
 	block.nNonce = from;
-	int64_t startmstime = 0;
+	alignas(16) uint256 currenthash;
+	alignas(16) uint32_t* currenthashforcheck = (uint32_t*) &currenthash;
+	// Increment pointer to last 4 byte index.
+	currenthashforcheck += 7;
+
 	// Use separate variables for storing current and new BLE block hash values
 	std::string hashPrevBlock, chaintipblockhash;
-
 	if(idx == 0) {
 		// Keep trying to retrieve previous hash from block object until success
 		// This value is static but rereading from chainActive.Tip()->GetBlockHash() &
@@ -243,22 +249,45 @@ void proofOfWorkFinder(uint32_t idx, CBlock block, uint64_t from, uint64_t to, M
 			hashPrevBlock = block.hashPrevBlock.GetHex();
 			MilliSleep(5);
 		}
- 		startmstime = GetTimeMillis();
 	}
-	while(!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus())) {
+	//while(!block.ScanHash(block.nBits, chainparams.GetConsensus())) {
+	while(true) {
+/*	printf("thread %lu hash block.GetHash() %s\n",idx,block.GetHash().GetHex().c_str());
+ 	printf("thread %lu hash hashMerkleRoot %s\n",idx,block.GetHash().GetHex().c_str());*/
+/*
+	if(block.hashMetronome.GetHex().c_str() != block.GetHash().GetHex().c_str()) {
+		printf("  using hash hashMerkleRoot \n");
+	}*/
 
 		if(handler->stop) {
 			// Sleep briefly freeing up cpu for post mining session operations
-			MilliSleep(100);
+			MilliSleep(50);
 			handler->currentOffset[idx] = block.nNonce;
 			block.SetNull();
 			break;
 		}
 
+		// Retrieve currently mined hash. Returns big endian
+		currenthash = block.GetHash();
+
+		// Rough quick check for candidate hash if last 4 bytes 
+		// is zero (of Big Endian hash), which is already rare
+		if(*currenthashforcheck == (const uint32_t) 0) {
+			printf("checking if candidate hash is below target...\n%s\n",currenthash.GetHex().c_str());
+			// If true, do a full check whether hash is below target and exit for block submission
+			if(CheckProofOfWork(currenthash, block.nBits, chainparams.GetConsensus())) {
+				// Inform other threads to stop and focus on block submission
+				handler->stop = true;
+				break;
+			}
+		}
+
+		// nNonce is used to slightly adjust and calculate next hash
 		block.nNonce++;
 
-		// Exit checks & block time property update done every 500k cycles 
+		// Exit checks & block time property update done every 500k cycles, roughly twice per second
 		if(block.nNonce % 500000 == 0) {
+
  			block.nTime = GetAdjustedTime();
 			// Only have the first thread check for externally found blocks and process cancellations
 			// informing other mining threads to quit via new handler member 'stop' value
@@ -275,9 +304,10 @@ void proofOfWorkFinder(uint32_t idx, CBlock block, uint64_t from, uint64_t to, M
 					chaintipblockhash = chainActive.Tip()->GetBlockHash().GetHex();
 				}
 				if(chaintipblockhash != hashPrevBlock) {
-					printf("\nSomeone else mined a block! Restarting...\n");
+					printf("\nSomeone else mined the block! Restarting...\n");
 					handler->stop = true;
 				}
+ 
 			}
 			if(block.nNonce >= to || block.nNonce < from) {
 				MilliSleep(10);
@@ -286,19 +316,13 @@ void proofOfWorkFinder(uint32_t idx, CBlock block, uint64_t from, uint64_t to, M
 			}
 		}
 	}
-
-	// Mining performance summary
-	if(idx == 0) {
-			uint64_t totalNonceCount = 0;
-			for (int i = 0; i < MAX_N_THREADS; ++i) {
-				totalNonceCount += ((int64_t) handler->currentOffset[i]) - i * PAGE_SIZE_MINER;
-			}
-
-			if (GetTime() != handler->mineStartTime) {
-				double secondsmining = (double)(GetTimeMillis() - startmstime) / 1000;
-				double avgHashRate = (totalNonceCount / secondsmining)  / 1000;
-				std::cout << "Hashrate: " << std::setprecision(2) << avgHashRate << " kH/s for " << std::setprecision(2) << secondsmining << " Seconds.";
-			}
+ 
+	// Mining performance summary of no result session
+	if(idx == 0 && block.IsNull()) {
+		uint64_t totalNonceCount = handler->currentOffset[0] * MAX_N_THREADS;
+		if((GetTime() - handler->mineStartTime) >= 1) {
+			std::cout << totalNonceCount << " Hashes:" << " in " << (GetTime() - handler->mineStartTime) << " Seconds.";
+		}
 	}
 
 	if (block.IsNull()) {
@@ -307,7 +331,7 @@ void proofOfWorkFinder(uint32_t idx, CBlock block, uint64_t from, uint64_t to, M
 	}
 	
 	if(!hasPeers()) { 
-		printf("WARNING: No connections to Node Peers for block submission...retrying for 5 seconds\n");
+		printf("\nWARNING: No connections to Node Peers for block submission...retrying for 5 seconds\n");
 		// If no peers retry for 5 seconds
 		uint32_t waitforpeers = 50;
 		while(!hasPeers() && waitforpeers) {
@@ -317,18 +341,17 @@ void proofOfWorkFinder(uint32_t idx, CBlock block, uint64_t from, uint64_t to, M
 		// Give up submitting new block if still no peers
 		if(!hasPeers()) { return; }
 	}
-	handler->stop = true;
+	//handler->stop = true; CheckProofOfWork conditional already sets this
 	handler->found = true;
 	handler->block = block;
 
 	//MilliSleep(1000);
-
-	printf("Submitting newly mined block: %s, BlockTime: %lu, Now: %lu\n", block.GetHash().GetHex().c_str(), block.GetBlockTime(), GetTime());
-
 	//block.nTime += 120;
 
 	std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
 	bool success = ProcessNewBlock(chainparams, shared_pblock, true, nullptr);
+
+	printf("\nSubmitting newly mined block: %s, BlockTime: %lu, Now: %lu\n", block.GetHash().GetHex().c_str(), block.GetBlockTime(), GetTime());
 
 	printf("Ending... Block accepted? %s.\n", success ? "Yes" : "No");
 	//MilliSleep(10000);
@@ -431,8 +454,8 @@ int main(int argc, char* argv[])
 	std::cout << "for at least 10 minutes beforehand, if the last sync was done over 6 hours ago..." << std::endl;
 	std::cout << "You can also copy over the 'blocks' and 'chainstate' folders of a recently run " << std::endl;
 	std::cout << "and fully synced BitcoinLE-qt wallet." << std::endl;
-	std::cout << "Delete the two folders of the solo miner local work folder " << std::endl;
-	std::cout << "(default is '.bitcoinLE') first if you intend to do so." << std::endl;
+	std::cout << "Delete those two folders inside the solo miner's local work folder (default is '.bitcoinLE')" << std::endl;
+	std::cout << "first if you intend to do so." << std::endl;
 	std::cout << "This version does not include the optimized Miner yet. 500-1000 % improvements to hashrate are expected in a future release." << std::endl << std::endl;
 #endif
 	std::cout << "Wallet Count: " << vpwallets.size() << std::endl;
