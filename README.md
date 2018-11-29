@@ -18,7 +18,7 @@ chmod +x autogen.sh #only need to do this line once
 make
 ```
 There is no gui wallet support at this moment.
-You can retrieve wallet balance and do transfers with command line bitcoinle-cli
+You can retrieve wallet balance and do transfers with command line bitcoinle-cli  
 Specify compiler to use with CC & CXX parameters e.g.  
 ```
 chmod x+u autogen.sh #only need to do this line once
