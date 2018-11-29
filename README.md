@@ -14,14 +14,16 @@ Compiling requires (see also choice of compiler before this step)
 ```
 chmod +x autogen.sh #only need to do this line once
 ./autogen.sh
-./configure --disable-tests --disable-bench  
+./configure --disable-tests --disable-bench --with-gui=no  
 make
 ```
+There is no gui wallet support at this moment.
+You can retrieve wallet balance and do transfers with command line bitcoinle-cli
 Specify compiler to use with CC & CXX parameters e.g.  
 ```
 chmod x+u autogen.sh #only need to do this line once
 ./autogen.sh
-./configure CC="gcc-8" CXX="g++-8" --disable-tests --disable-bench
+./configure CC="gcc-8" CXX="g++-8" --disable-tests --disable-bench --with-gui=no  
 make CC="gcc-8" CXX="g++-8"
 ```
 ###### Optionally strip binary of bloat (less ram consumption)
