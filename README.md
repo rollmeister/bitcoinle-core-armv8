@@ -48,12 +48,14 @@ make CC="clang-6.0" CXX="clang++-6.0"
 ```
 bitcoinle-miner may crash. Use a bash code in script to restart it...
 ```
-until ~/PATHTOBINARY/./bitcoinle-miner > bitcoinleminer.log; do  
+#!/bin/bash
+until ~/FOLDERTOBINARY/./bitcoinle-miner > bitcoinleminer.log; do  
     echo "Server 'myserver' crashed with exit code $?.  Respawning.." >&2  
     sleep 10  
 done  
 ```
-There is a slow memory leak in the software so restarting say using a cron job once a week is recommended.  
+chmod x+ scriptname.sh   
+There is a slow memory leak in the software so restarting say using a cron job once a week is recommended if the miner does not crash and restart with the above script before.    
 
 This is a fork of the BitcoinLE Core software optimised for ArmV8. Hashrates on a 1.8ghz Cortex-a53 cpu core is 900kh/sec. 500-1000% improvements to hashrates are foreseen. Keep checking repo for updates.  
 
