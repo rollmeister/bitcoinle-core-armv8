@@ -1,3 +1,5 @@
+Note to Raspberry Pi owners. These boards do not seem to have armv8 sha2 cpu features. Compile support was attempted but people are reporting it cannot be used due to hardware limitation. Do cat /proc/cpuinfo to check.  
+
 Git newbies, how to to install repo sources into a folder. Refer to docs/build-unix.md for other software dependencies install.  
 ```
 sudo apt install git
