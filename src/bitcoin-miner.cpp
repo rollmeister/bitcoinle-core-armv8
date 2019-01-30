@@ -6124,7 +6124,7 @@ int main(int argc, char* argv[])
 	// Como converter uma coinbase key em bitcoin address
 	//CBitcoinAddress addr(coinbaseKey.GetPubKey().GetID());
 #if defined(__aarch32__) || defined(__aarch64__)
-	std::cout << std::endl << "You are using BitcoinLE Core ArmV8 Solo Miner Whale 6x Edition (alpha 16.8) " << std::endl;
+	std::cout << std::endl << "You are using BitcoinLE Core ArmV8 Solo Miner Whale 6x Edition (alpha 16.9) " << std::endl;
 	std::cout << "https://github.com/rollmeister/bitcoinle-core-armv8" << std::endl;
 	std::cout << "It is recommended to sync its blockchain by first running bitcoinled" << std::endl;
 	std::cout << "for at least 10 minutes beforehand, if the last sync was done over 6 hours ago..." << std::endl;
