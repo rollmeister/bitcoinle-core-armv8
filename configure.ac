@@ -263,7 +263,7 @@ if test "x$CXXFLAGS_overridden" = "xno"; then
 
   ## Reduce GCC memory consumption on Arm
   AC_CHECK_DEFINE([__arm__],[CXXFLAGS="$CXXFLAGS --param ggc-min-expand=1 --param ggc-min-heapsize=32768 -g0 -Os"],,[[$CXXFLAG_WERROR]])
-  AC_CHECK_DEFINE([__aarch64__],[CXXFLAGS="$CXXFLAGS --param ggc-min-expand=1 --param ggc-min-heapsize=32768 -g0"],,[[$CXXFLAG_WERROR]])
+  AC_CHECK_DEFINE([__aarch64__],[CXXFLAGS="$CXXFLAGS --param ggc-min-expand=1 --param ggc-min-heapsize=32768 -g0 -O3"],,[[$CXXFLAG_WERROR]])
   ## ArmV8 specific flags
   AC_CHECK_DEFINE([__aarch64__],[CXXFLAGS="$CXXFLAGS -mcpu=cortex-a53+crypto+crc"],,[[$CXXFLAG_WERROR]])
   ## __aarch32__ specific flags
